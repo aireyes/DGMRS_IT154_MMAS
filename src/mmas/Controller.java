@@ -16,11 +16,18 @@ import java.util.*;
 public class Controller implements Initializable {
 
     public final int COUNTER_SIZE = 1500;
+    int time;
 
     public final ObservableList<String> opt_algo = FXCollections.observableArrayList(
             "FIRST_FIT",
             "BEST_FIT",
             "WORST_FIT"
+    );
+
+    public final ObservableList<String> opt_speed = FXCollections.observableArrayList(
+            "SLOW",
+            "NORMAL",
+            "FAST"
     );
 
     int[] addresses;
@@ -65,7 +72,9 @@ public class Controller implements Initializable {
             canvas_memory,
             canvas_counter;
     @FXML
-    ComboBox combo_algo;
+    ComboBox
+            combo_algo,
+            combo_speed;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -89,6 +98,10 @@ public class Controller implements Initializable {
         combo_algo.setItems(opt_algo);
         combo_algo.getSelectionModel().select(0);
 
+        time = 1000;
+        combo_speed.setItems(opt_speed);
+        combo_speed.getSelectionModel().select(1);
+
         try {
             reset();
         } catch (InterruptedException e) {
@@ -97,6 +110,13 @@ public class Controller implements Initializable {
     }
 
     public void reset() throws InterruptedException {
+        if (combo_speed.getSelectionModel().getSelectedItem().equals("SLOW")) {
+            time = 1000;
+        } else if (combo_speed.getSelectionModel().getSelectedItem().equals("NORMAL")) {
+            time = 500;
+        } else {
+            time = 200;
+        }
         first = true;
         orig_processes = Queue.getProcesses("processes/processes_set1.csv"); /* set default processes */
         processes = new ArrayList<>();
@@ -113,6 +133,7 @@ public class Controller implements Initializable {
         lbl_coalescing.setText(String.valueOf(((int) slider_coalescing.getValue())));
         lbl_compaction.setText(String.valueOf((int) slider_compaction.getValue()));
         btn_stop.setDisable(true);
+        btn_continue.setDisable(true);
 
         pointer = 0;
         memory = new Memory();
@@ -200,6 +221,7 @@ public class Controller implements Initializable {
         slider_coalescing.setDisable(true);
         slider_compaction.setDisable(true);
         combo_algo.setDisable(true);
+        combo_speed.setDisable(true);
         new LoadProcessesThread().start();
     }
 
@@ -366,7 +388,7 @@ public class Controller implements Initializable {
                 counter++;
                 displayCounter();
                 displayMemory();
-                Thread.sleep(500);
+                Thread.sleep(time);
             }
             prevBlock = b;
         }
@@ -392,6 +414,7 @@ public class Controller implements Initializable {
                     slider_compaction.setDisable(false);
                     slider_coalescing.setDisable(false);
                     combo_algo.setDisable(false);
+                    combo_speed.setDisable(false);
                     reset();
                     this.stop();
                 } catch (InterruptedException e) {
@@ -457,7 +480,7 @@ public class Controller implements Initializable {
                 displayCounter();
 
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(time);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -478,7 +501,7 @@ public class Controller implements Initializable {
                     displayProcesses(orig_processes);
                     displayMemory();
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(time);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -541,7 +564,7 @@ public class Controller implements Initializable {
                 displayCounter();
                 displayMemory();
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(time);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
