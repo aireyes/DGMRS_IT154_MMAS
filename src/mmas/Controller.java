@@ -30,6 +30,8 @@ public class Controller implements Initializable {
     int pointer;
     int counter;
 
+    boolean first;
+
     /* processes */
     List<Process> orig_processes;
     List<Process> processes;
@@ -42,7 +44,8 @@ public class Controller implements Initializable {
     @FXML
     Button
             btn_run,
-            btn_continue;
+            btn_continue,
+            btn_stop;
 
     @FXML
     Slider
@@ -94,6 +97,7 @@ public class Controller implements Initializable {
     }
 
     public void reset() throws InterruptedException {
+        first = true;
         orig_processes = Queue.getProcesses("processes/processes_set1.csv"); /* set default processes */
         processes = new ArrayList<>();
         for (Process p : orig_processes) {
@@ -108,6 +112,7 @@ public class Controller implements Initializable {
         lbl_memorySize.setText(String.valueOf(memorySize));
         lbl_coalescing.setText(String.valueOf(((int) slider_coalescing.getValue())));
         lbl_compaction.setText(String.valueOf((int) slider_compaction.getValue()));
+        btn_stop.setDisable(true);
 
         pointer = 0;
         memory = new Memory();
@@ -118,6 +123,7 @@ public class Controller implements Initializable {
         addresses = new int[(int) slider_memorySize.getValue()];
         clearMemory();
         displayMemory();
+        displayCounter();
     }
 
     public void displayProcessesName(List<Process> orig_processes) { /* display process name */
@@ -188,9 +194,12 @@ public class Controller implements Initializable {
         reset();
         addresses = new int[(int) slider_memorySize.getValue()];
         btn_run.setDisable(true);
+        btn_continue.setDisable(false);
+        btn_stop.setDisable(false);
         slider_memorySize.setDisable(true);
         slider_coalescing.setDisable(true);
         slider_compaction.setDisable(true);
+        combo_algo.setDisable(true);
         new LoadProcessesThread().start();
     }
 
@@ -229,6 +238,12 @@ public class Controller implements Initializable {
     }
 
     public double addProcess(double size) {
+        if (first) {
+            double base = 400;
+            occupy(base, size);
+            first = false;
+            return base;
+        }
         if (combo_algo.getSelectionModel().getSelectedItem().equals("FIRST_FIT")) {
             double free = 0;
             double base = -1;
@@ -273,16 +288,24 @@ public class Controller implements Initializable {
             }
             if (!bases.isEmpty()) {
                 if (combo_algo.getSelectionModel().getSelectedItem().equals("BEST_FIT")) {
+                    List<Double> sizes_orig = new ArrayList<>();
+                    for (Double s : sizes) {
+                        sizes_orig.add(s);
+                    }
                     double s = Collections.min(sizes);
-                    double b = bases.get(sizes.indexOf(s));
+                    double b = bases.get(sizes_orig.indexOf(s));
                     if (s >= size) {
                         occupy(b, size);
                         return b;
                     }
                     return -1;
                 } else if (combo_algo.getSelectionModel().getSelectedItem().equals("WORST_FIT")) {
-                    double s = Collections.min(sizes);
-                    double b = bases.get(sizes.indexOf(s));
+                    List<Double> sizes_orig = new ArrayList<>();
+                    for (Double s : sizes) {
+                        sizes_orig.add(s);
+                    }
+                    double s = Collections.max(sizes);
+                    double b = bases.get(sizes_orig.indexOf(s));
                     if (s >= size) {
                         occupy(b, size);
                         return b;
@@ -360,6 +383,20 @@ public class Controller implements Initializable {
             btn_continue.setOnAction(event -> {
                 if (!suspended) pause();
                 else res();
+            });
+            btn_stop.setOnAction((ActionEvent event) -> {
+                try {
+                    btn_continue.setDisable(true);
+                    btn_run.setDisable(false);
+                    slider_memorySize.setDisable(false);
+                    slider_compaction.setDisable(false);
+                    slider_coalescing.setDisable(false);
+                    combo_algo.setDisable(false);
+                    reset();
+                    this.stop();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             });
         }
 
