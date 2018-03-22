@@ -9,7 +9,7 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmas.Controller">
-   <Label layoutX="62.0" layoutY="30.0" text="Memory Size (MB)">
+   <Label layoutX="66.0" layoutY="30.0" text="Memory Size (KB)">
       <font>
          <Font name="System Bold" size="12.0" />
       </font>

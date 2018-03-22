@@ -123,10 +123,7 @@ public class Controller implements Initializable {
         for (Process p : orig_processes) {
             processes.add(p);
         }
-        displayProcessesName(orig_processes); /* display processes name */
-        displayProcesses(orig_processes); /* display processes */
-        displayMemory(); /* display memory */
-        displayCounter();
+
 
         memorySize = (int) slider_memorySize.getValue();
         lbl_memorySize.setText(String.valueOf(memorySize));
@@ -143,8 +140,14 @@ public class Controller implements Initializable {
         processesQueue = new ArrayList<>();
         addresses = new int[(int) slider_memorySize.getValue()];
         clearMemory();
-        displayMemory();
+
         displayCounter();
+        displayProcessesName(orig_processes); /* display processes name */
+        displayProcesses(orig_processes); /* display processes */
+        displayMemory(); /* display memory */
+
+//        displayCounter();
+//        displayMemory();
     }
 
     public void displayProcessesName(List<Process> orig_processes) { /* display process name */
@@ -154,7 +157,7 @@ public class Controller implements Initializable {
         graphicsContext.setStroke(Color.BLACK);
         for (int i = 0; i < orig_processes.size(); i++) {
             double h = (height / orig_processes.size()) / 2;
-            graphicsContext.strokeText("JOB: " + orig_processes.get(i).getName() + ", SIZE: " + orig_processes.get(i).getSize() + " KB", 0, (i * (height / orig_processes.size()) + h));
+            graphicsContext.strokeText(orig_processes.get(i).getName() + ", SIZE: " + orig_processes.get(i).getSize() + " KB", 0, (i * (height / orig_processes.size()) + h));
         }
         graphicsContext.stroke();
     }
@@ -189,24 +192,24 @@ public class Controller implements Initializable {
     }
 
     public void displayCounter() throws InterruptedException {
-        if (counter % slider_compaction.getValue() == 0) {
-            compact();
-        }
         GraphicsContext graphicsContext = canvas_counter.getGraphicsContext2D();
         graphicsContext.setFill(Color.BLACK);
         graphicsContext.fillRect(0, 0, canvas_counter.getWidth(), canvas_counter.getHeight());
-        for (int i = 0; i < COUNTER_SIZE; i++) {
+        for (int i = 0; i < COUNTER_SIZE + 1; i++) {
             if (i < counter) {
                 graphicsContext.setFill(Color.ORANGE);
             } else if (i == counter) {
-
                 graphicsContext.setFill(Color.WHITE);
             } else {
                 graphicsContext.setFill(Color.YELLOW);
             }
             graphicsContext.strokeRect((canvas_counter.getWidth() / 2) + (i * 50) - 25 - (counter * 50), (canvas_counter.getHeight() / 2) - 25, 50, 50);
             graphicsContext.fillRect((canvas_counter.getWidth() / 2) + (i * 50) - 25 - (counter * 50), (canvas_counter.getHeight() / 2) - 25, 50, 50);
-            graphicsContext.strokeText(String.valueOf(i + 1), (canvas_counter.getWidth() / 2) + (i * 50) - (counter * 50) - ((double) String.valueOf(i + 1).length() / 2), canvas_counter.getHeight() / 2);
+            graphicsContext.strokeText(String.valueOf(i), (canvas_counter.getWidth() / 2) + (i * 50) - (counter * 50) - ((double) String.valueOf(i).length() / 2), canvas_counter.getHeight() / 2);
+        }
+//        Thread.sleep(500);
+        if (counter % slider_compaction.getValue() == 0 && !first) {
+            compact();
         }
     }
 
@@ -387,6 +390,7 @@ public class Controller implements Initializable {
                 occupy(b.memoryBaseAddress, size);
                 counter++;
                 displayCounter();
+                displayProcesses(orig_processes);
                 displayMemory();
                 Thread.sleep(time);
             }
@@ -474,11 +478,12 @@ public class Controller implements Initializable {
                 graphicsContext.strokeText(p.getName(), (canvas_memory.getWidth() / 2) - ((double) p.getName().length() / 2), y + (h / 2));
                 processesQueue.add(p);
 
-                displayProcesses(orig_processes);
 
                 counter++;
                 displayCounter();
 
+                displayProcesses(orig_processes);
+                displayMemory();
                 try {
                     Thread.sleep(time);
                 } catch (InterruptedException e) {
@@ -522,7 +527,10 @@ public class Controller implements Initializable {
                 System.out.println(currentProcess.getSize());
 
                 processesQueue.get(0).state = ProcessState.TERMINATED;
+                counter++;
+                displayCounter();
                 displayProcesses(orig_processes);
+                displayMemory();
 
                 if (processesQueue.get(0).getBlock().memoryBaseAddress > 0 && addresses[(int) processesQueue.get(0).getBlock().memoryBaseAddress - 1] == 0)
                     coalesce();
@@ -549,6 +557,10 @@ public class Controller implements Initializable {
                 slider_memorySize.setDisable(false);
                 slider_coalescing.setDisable(false);
                 slider_compaction.setDisable(false);
+                combo_speed.setDisable(false);
+                combo_algo.setDisable(false);
+                btn_continue.setDisable(true);
+                btn_stop.setDisable(true);
                 return;
             }
         }
@@ -562,6 +574,7 @@ public class Controller implements Initializable {
                 System.out.println("Coalescing...");
                 counter++;
                 displayCounter();
+                displayProcesses(orig_processes);
                 displayMemory();
                 try {
                     Thread.sleep(time);
