@@ -4,11 +4,14 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmas.Controller">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1030.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmas.Controller">
    <Label layoutX="66.0" layoutY="30.0" text="Memory Size (KB)">
       <font>
          <Font name="System Bold" size="12.0" />
@@ -29,14 +32,26 @@
    <Canvas fx:id="canvas_memory" height="350.0" layoutX="682.0" layoutY="14.0" width="104.0" />
    <Canvas fx:id="canvas_counter" height="60.0" layoutX="14.0" layoutY="373.0" width="771.0" />
    <Button fx:id="btn_run" layoutX="734.0" layoutY="461.0" mnemonicParsing="false" onAction="#btn_runClick" text="Run" />
-   <Label fx:id="lbl_memorySize" layoutX="310.0" layoutY="30.0" text="1024" />
+   <Label fx:id="lbl_memorySize" layoutX="322.0" layoutY="30.0" text="1024" />
    <Button fx:id="btn_continue" layoutX="15.0" layoutY="461.0" mnemonicParsing="false" text="Pause / Resume" />
-   <Slider fx:id="slider_memorySize" layoutX="170.0" layoutY="32.0" max="2000.0" min="1000.0" minorTickCount="5" value="1000.0" />
-   <Slider fx:id="slider_coalescing" layoutX="170.0" layoutY="62.0" max="10.0" min="1.0" value="1.0" />
-   <Slider fx:id="slider_compaction" layoutX="170.0" layoutY="91.0" min="10.0" value="20.0" />
-   <Label fx:id="lbl_coalescing" layoutX="309.0" layoutY="60.0" text="1" />
-   <Label fx:id="lbl_compaction" layoutX="309.0" layoutY="90.0" text="1" />
-   <ComboBox fx:id="combo_algo" focusTraversable="false" layoutX="411.0" layoutY="26.0" prefWidth="150.0" />
+   <Slider fx:id="slider_memorySize" layoutX="182.0" layoutY="32.0" max="2000.0" min="1000.0" minorTickCount="5" value="1000.0" />
+   <Slider fx:id="slider_coalescing" layoutX="182.0" layoutY="62.0" max="10.0" min="1.0" value="1.0" />
+   <Slider fx:id="slider_compaction" layoutX="182.0" layoutY="91.0" min="10.0" value="20.0" />
+   <Label fx:id="lbl_coalescing" layoutX="321.0" layoutY="60.0" text="1" />
+   <Label fx:id="lbl_compaction" layoutX="321.0" layoutY="90.0" text="1" />
+   <ComboBox fx:id="combo_algo" focusTraversable="false" layoutX="500.0" layoutY="27.0" prefWidth="150.0" />
    <Button fx:id="btn_stop" layoutX="124.0" layoutY="461.0" mnemonicParsing="false" text="Stop" />
-   <ComboBox fx:id="combo_speed" focusTraversable="false" layoutX="411.0" layoutY="65.0" prefWidth="150.0" />
+   <ComboBox fx:id="combo_speed" focusTraversable="false" layoutX="500.0" layoutY="57.0" prefWidth="150.0" />
+   <Pane layoutX="795.0" prefHeight="500.0" prefWidth="235.0">
+      <children>
+         <TextArea fx:id="txtArea_processes" layoutX="14.0" layoutY="98.0" prefHeight="350.0" prefWidth="208.0">
+            <font>
+               <Font size="18.0" />
+            </font></TextArea>
+         <Button fx:id="btn_load" layoutX="180.0" layoutY="461.0" mnemonicParsing="false" onAction="#btn_loadClick" text="Load" />
+         <ComboBox fx:id="combo_builtIn" layoutX="14.0" layoutY="38.0" prefHeight="25.0" prefWidth="208.0" />
+         <RadioButton fx:id="radio_builtIn" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="Built-In" />
+         <RadioButton fx:id="radio_custom" layoutX="14.0" layoutY="73.0" mnemonicParsing="false" text="Custom" />
+      </children>
+   </Pane>
 </AnchorPane>

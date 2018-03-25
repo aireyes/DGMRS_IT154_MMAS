@@ -1,5 +1,7 @@
 package mmas;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -9,6 +11,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 
 import java.net.URL;
 import java.util.*;
@@ -30,6 +33,11 @@ public class Controller implements Initializable {
             "FAST"
     );
 
+    public final ObservableList<String> opt_processes = FXCollections.observableArrayList(
+            "Sample 1",
+            "Sample 2"
+    );
+
     int[] addresses;
     List<Process> processesQueue;
 
@@ -44,6 +52,8 @@ public class Controller implements Initializable {
     List<Process> processes;
     Memory memory;
 
+    ToggleGroup toggleGroup;
+
     @FXML
     Label
             lbl_memorySize;
@@ -52,7 +62,8 @@ public class Controller implements Initializable {
     Button
             btn_run,
             btn_continue,
-            btn_stop;
+            btn_stop,
+            btn_load;
 
     @FXML
     Slider
@@ -74,7 +85,17 @@ public class Controller implements Initializable {
     @FXML
     ComboBox
             combo_algo,
-            combo_speed;
+            combo_speed,
+
+            combo_builtIn;
+
+    @FXML
+    TextArea txtArea_processes;
+
+    @FXML
+    RadioButton
+            radio_custom,
+            radio_builtIn;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -102,6 +123,80 @@ public class Controller implements Initializable {
         combo_speed.setItems(opt_speed);
         combo_speed.getSelectionModel().select(1);
 
+        combo_builtIn.setItems(opt_processes);
+        combo_builtIn.getSelectionModel().select(0);
+        combo_builtIn.valueProperty().addListener((observable, oldValue, newValue) -> {
+            String fileName = "";
+            if (combo_builtIn.getSelectionModel().getSelectedItem().toString().equals("Sample 1")) {
+                fileName = "processes/processes_set1.csv";
+            } else {
+                fileName = "processes/processes_set2.csv";
+            }
+
+            first = true;
+            orig_processes = Queue.getProcesses(fileName, txtArea_processes);
+            processes = new ArrayList<>();
+            for (Process p : orig_processes) {
+                processes.add(p);
+            }
+
+            memorySize = (int) slider_memorySize.getValue();
+            lbl_memorySize.setText(String.valueOf(memorySize));
+            lbl_coalescing.setText(String.valueOf(((int) slider_coalescing.getValue())));
+            lbl_compaction.setText(String.valueOf((int) slider_compaction.getValue()));
+            btn_stop.setDisable(true);
+            btn_continue.setDisable(true);
+
+            pointer = 0;
+            memory = new Memory();
+
+            counter = 0;
+
+            processesQueue = new ArrayList<>();
+//            addresses = new int[(int) slider_memorySize.getValue()];
+            clearMemory();
+
+            try {
+                displayCounter();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            displayProcessesName(orig_processes); /* display processes name */
+            displayProcesses(orig_processes); /* display processes */
+            displayMemory(); /* display memory */
+        });
+
+        toggleGroup = new ToggleGroup();
+        radio_builtIn.setUserData(0);
+        radio_builtIn.setToggleGroup(toggleGroup);
+        radio_custom.setUserData(1);
+        radio_custom.setToggleGroup(toggleGroup);
+
+        toggleGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+            @Override
+            public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+                if (toggleGroup.getSelectedToggle() != null) {
+                    if (toggleGroup.getSelectedToggle().getUserData().toString().equals("0")) {
+                        combo_builtIn.setDisable(false);
+                        txtArea_processes.setEditable(false);
+                        btn_load.setDisable(true);
+                    } else {
+                        combo_builtIn.setDisable(true);
+                        txtArea_processes.setEditable(true);
+                        btn_load.setDisable(false);
+                    }
+                }
+            }
+        });
+        radio_builtIn.setSelected(true);
+        radio_custom.setSelected(false);
+
+        orig_processes = Queue.getProcesses("processes/processes_set1.csv", txtArea_processes); /* set default processes */
+        processes = new ArrayList<>();
+        for (Process p : orig_processes) {
+            processes.add(p);
+        }
+
         try {
             reset();
         } catch (InterruptedException e) {
@@ -118,12 +213,12 @@ public class Controller implements Initializable {
             time = 200;
         }
         first = true;
-        orig_processes = Queue.getProcesses("processes/processes_set1.csv"); /* set default processes */
-        processes = new ArrayList<>();
-        for (Process p : orig_processes) {
-            processes.add(p);
-        }
-
+        addresses = new int[Integer.parseInt(lbl_memorySize.getText())];
+//        orig_processes = Queue.getProcesses("processes/processes_set1.csv", txtArea_processes); /* set default processes */
+//        processes = new ArrayList<>();
+//        for (Process p : orig_processes) {
+//            processes.add(p);
+//        }
 
         memorySize = (int) slider_memorySize.getValue();
         lbl_memorySize.setText(String.valueOf(memorySize));
@@ -153,6 +248,8 @@ public class Controller implements Initializable {
     public void displayProcessesName(List<Process> orig_processes) { /* display process name */
         GraphicsContext graphicsContext = canvas_processesName.getGraphicsContext2D();
         double height = canvas_processesName.getHeight();
+//        graphicsContext.setFill(Color.WHITE);
+        graphicsContext.clearRect(0, 0, canvas_processesName.getWidth(), canvas_processesName.getHeight());
         graphicsContext.setLineWidth(1);
         graphicsContext.setStroke(Color.BLACK);
         for (int i = 0; i < orig_processes.size(); i++) {
@@ -215,6 +312,11 @@ public class Controller implements Initializable {
 
     @FXML
     public void btn_runClick(ActionEvent event) throws InterruptedException {
+        orig_processes = Queue.getProcesses(txtArea_processes);
+        processes = new ArrayList<>();
+        for (Process p : orig_processes) {
+            processes.add(p);
+        }
         reset();
         addresses = new int[(int) slider_memorySize.getValue()];
         btn_run.setDisable(true);
@@ -226,6 +328,37 @@ public class Controller implements Initializable {
         combo_algo.setDisable(true);
         combo_speed.setDisable(true);
         new LoadProcessesThread().start();
+    }
+
+    @FXML
+    public void btn_loadClick(ActionEvent event) throws InterruptedException {
+        first = true;
+        orig_processes = Queue.getProcesses(txtArea_processes);
+        processes = new ArrayList<>();
+        for (Process p : orig_processes) {
+            processes.add(p);
+        }
+
+        memorySize = (int) slider_memorySize.getValue();
+        lbl_memorySize.setText(String.valueOf(memorySize));
+        lbl_coalescing.setText(String.valueOf(((int) slider_coalescing.getValue())));
+        lbl_compaction.setText(String.valueOf((int) slider_compaction.getValue()));
+        btn_stop.setDisable(true);
+        btn_continue.setDisable(true);
+
+        pointer = 0;
+        memory = new Memory();
+
+        counter = 0;
+
+        processesQueue = new ArrayList<>();
+        addresses = new int[(int) slider_memorySize.getValue()];
+        clearMemory();
+
+        displayCounter();
+        displayProcessesName(orig_processes); /* display processes name */
+        displayProcesses(orig_processes); /* display processes */
+        displayMemory(); /* display memory */
     }
 
     public void displayMemory() {
@@ -378,6 +511,18 @@ public class Controller implements Initializable {
         for (Block b : blocks) {
             System.out.println(b.memoryBaseAddress);
             if (num == 0) {
+                if (b.memoryBaseAddress != 0) {
+                    double size = b.memoryLimitAddress - b.memoryBaseAddress + 1;
+                    removeProcess(b.memoryBaseAddress, size);
+                    b.memoryBaseAddress = 0;
+                    b.memoryLimitAddress = b.memoryBaseAddress + size - 1;
+                    occupy(b.memoryBaseAddress, size);
+                    counter++;
+                    displayCounter();
+                    displayProcesses(orig_processes);
+                    displayMemory();
+                    Thread.sleep(time);
+                }
                 prevBlock = b;
                 num++;
                 continue;
@@ -419,6 +564,11 @@ public class Controller implements Initializable {
                     slider_coalescing.setDisable(false);
                     combo_algo.setDisable(false);
                     combo_speed.setDisable(false);
+                    orig_processes = Queue.getProcesses(txtArea_processes);
+                    processes = new ArrayList<>();
+                    for (Process p : orig_processes) {
+                        processes.add(p);
+                    }
                     reset();
                     this.stop();
                 } catch (InterruptedException e) {
@@ -436,7 +586,7 @@ public class Controller implements Initializable {
             }
         }
 
-        public void process() throws InterruptedException {
+        public synchronized void process() throws InterruptedException {
             synchronized (this) {
                 while (suspended)
                     wait();
@@ -561,6 +711,9 @@ public class Controller implements Initializable {
                 combo_algo.setDisable(false);
                 btn_continue.setDisable(true);
                 btn_stop.setDisable(true);
+                for (Process p : orig_processes) {
+                    processes.add(p);
+                }
                 return;
             }
         }
